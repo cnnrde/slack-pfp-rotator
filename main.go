@@ -26,12 +26,13 @@ func getImage(url string) (image []byte, err error) {
 }
 
 func rotateImage(imageBytes []byte) ([]byte, error) {
-	// decode the image
 	img, _, err := image.Decode(bytes.NewReader(imageBytes))
 	if err != nil {
 		return nil, err
 	}
-	// rotate the image
+	// rotate the image by -90 degrees counter clockwise
+	// same as rotating the image by 90 degrees clockwise
+	// but this imaging library's rotate function rotates ccw
 	img = imaging.Rotate(img, -90, color.Black)
 	// encode the image
 	buf := new(bytes.Buffer)
@@ -43,17 +44,19 @@ func rotateImage(imageBytes []byte) ([]byte, error) {
 }
 
 func init() {
+	// loads .env file into env vars
 	godotenv.Load()
 }
 
 func main() {
 	api := slack.New(os.Getenv("SLACK_TOKEN"), slack.OptionDebug(true))
 	for {
-		// get the user's profile picture
+		// get the user's slack profile
 		profile, err := api.GetUserProfile(&slack.GetUserProfileParameters{UserID: os.Getenv("SLACK_USER_ID")})
 		if err != nil {
 			logrus.WithError(err).Fatal("Failed to get user profile")
 		}
+		logrus.Infof("Got user profile: %s", profile.RealNameNormalized)
 		// get the user's profile picture
 		image, err := getImage(profile.ImageOriginal)
 		if err != nil {
@@ -72,7 +75,7 @@ func main() {
 		}
 
 		// set the user's pfp to the image
-		err = api.SetUserPhoto("pfp.png", slack.UserSetPhotoParams{})
+		err = api.SetUserPhoto("pfp.png", slack.UserSetPhotoParams{}) // why oh why does this take a filename instead of a byte array
 		if err != nil {
 			logrus.WithError(err).Fatal("Failed to set user photo")
 		}
