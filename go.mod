@@ -1,4 +1,4 @@
-module github.com/slack-pfp-rotator
+module github.com/connordennison/slack-pfp-rotator
 
 go 1.18
 
